@@ -1,26 +1,25 @@
-// config/envSchema.js
-require('dotenv').config();
-const Joi = require('joi');
+import dotenv from 'dotenv'
+import dotenvexpand from 'dotenv-expand'
+import Joi from 'joi'
+
+const env = dotenv.config()
+dotenvexpand.expand(env)
 
 const envSchema = Joi.object({
-  // App
-  NODE_ENV: Joi.string().valid('development', 'test', 'production').default('development'),
-  PORT: Joi.number().default(3000),
-  API_KEY: Joi.string().trim().allow(null, ''), 
+    PORT: Joi.number().default(3000),
+    DATABASE_HOST: Joi.string().required(),
+    DATABASE_NAME: Joi.string().required(),
+    DATABASE_USER: Joi.string().required(),
+    DATABASE_PASSWORD: Joi.string().required(),
+    DATABASE_PORT: Joi.number().default(3306),
+    API_KEY: Joi.string().optional(),
+}).unknown()
 
-  // DB (MariaDB)
-  DATABASE_HOST: Joi.string().trim().required(),
-  DATABASE_NAME: Joi.string().trim().required(),
-  DATABASE_USER: Joi.string().trim().required(),
-  DATABASE_PASSWORD: Joi.string().trim().required(),
-  DATABASE_PORT: Joi.number().default(3306),
+const { error, value: envValues} = envSchema.validate(process.env)
 
-}).unknown();
-
-const { error, value: envValues } = envSchema.validate(process.env);
 if (error) {
-  console.error('Invalid environment config:', error.details.map(e => e.message).join(', '));
-  process.exit(1);
+    console.error('Error de conexión: ', error.message)
+    process.exit(1)
 }
 
-module.exports = { envValues };
+export {envValues}  

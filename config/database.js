@@ -1,49 +1,43 @@
-const { Sequelize, QueryTypes } = require('sequelize');
-const { database } = require('./env');
+import { Sequelize, QueryTypes } from 'sequelize';
+import { envConfig } from './env.js';
 
 const sequelize = new Sequelize(
-  database.dbName,       // DATABASE_NAME
-  database.dbUser,       // DATABASE_USER
-  database.dbPassword,   // DATABASE_PASSWORD
+  envConfig.database.name,
+  envConfig.database.user,
+  envConfig.database.password,
   {
-    host: database.dbHost,   // DATABASE_HOST
-    port: database.dbPort ?? 3306,
+    host: envConfig.database.host,
+    port: envConfig.database.port,
     dialect: 'mariadb',
     logging: false,
-    pool: { max: 10, min: 1, acquire: 30000, idle: 10000 },
+    pool: {
+      max: 10,
+      min: 1,
+      acquire: 30000,
+      idle: 10000
+    }
   }
 );
 
 const authenticate = async () => {
   try {
     await sequelize.authenticate();
-    console.log('DB connection established.');
+    console.log('Conexión establecida con éxito.');
   } catch (error) {
-    console.error('Unable to connect to the database:', error?.message || error);
+    console.error('No se pudo conectar a la base de datos:', error.message);
     process.exit(1);
   }
 };
 
-const executeSelect = async (query, replacements = {}) => {
+const executeQuery = async (query, replacements = []) => {
   try {
-    return await sequelize.query(query, { replacements, type: QueryTypes.SELECT });
+    return await sequelize.query(query, {
+      replacements,
+      type: QueryTypes.SELECT
+    });
   } catch (error) {
-    throw new Error(`Database SELECT error: ${error?.message || error}`);
+    throw new Error(`Error en la consulta a la BD: ${error.message}`);
   }
 };
 
-const executeCall = async (query, replacements = {}) => {
-  try {
-    const [results, metadata] = await sequelize.query(query, { replacements });
-    return { results, metadata };
-  } catch (error) {
-    throw new Error(`Database CALL error: ${error?.message || error}`);
-  }
-};
-
-module.exports = {
-  sequelize,
-  authenticate,
-  executeSelect,
-  executeCall,
-};
+export { sequelize, authenticate, executeQuery };  // Make sure `authenticate` is exported here

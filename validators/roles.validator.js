@@ -1,13 +1,30 @@
 import Joi from 'joi';
 
-
 class RolesValidator {
-createRole = () =>
-    Joi.object({
-        role_name: Joi.string().trim().min(3).max(50).required(),
-        role_description: Joi.string().trim().min(5).max(255).optional().allow(null, ''),
-    }).options({ allowUnknown: false, stripUnknown: true });
-}
+    createRole() {
+        return Joi.object({
+            role_name: Joi.string().trim().required(),
+            description: Joi.string().required(),
+        });
+    }
 
+    getRoles(){
+        return Joi.object({});
+    }
+
+    updateRole(){
+        return Joi.object({
+            role_id: Joi.number().required(),
+            role_name: Joi.string().trim().required(),
+            description: Joi.string().required(),
+        });
+    }
+
+    deleteRole(){
+        return Joi.object({
+            role_id: Joi.number().required(),
+        });
+    }
+}
 
 export default new RolesValidator();

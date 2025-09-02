@@ -5,8 +5,8 @@
   "description": "Web app to manage graduate reports for BCs career",
   "main": "config/server.js",
   "scripts": {
-    "dev": "nodemon config/server.js",
-    "start": "node config/server.js"
+    "dev": "nodemon start.js",
+    "start": "node start.js"
 },
 "dependencies": {
     "@easterneas/fastify-sequelize": "^1.1.1",

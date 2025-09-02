@@ -1,19 +1,19 @@
-// config/env.js
-const { envValues } = require('./envSchema');
+import { envValues } from './envSchema.js'
 
-const config = {
-  globalConfig: {
-    port: envValues.PORT,
-    apiKey: envValues.API_KEY,          
-    nodeEnv: envValues.NODE_ENV,
-  },
-  database: {
-    dbHost: envValues.DATABASE_HOST,
-    dbName: envValues.DATABASE_NAME,
-    dbUser: envValues.DATABASE_USER,
-    dbPassword: envValues.DATABASE_PASSWORD,
-    dbPort: envValues.DATABASE_PORT,
-  },
-};
+const envConfig = {
+    database: {
+        name: envValues.DATABASE_NAME,
+        user: envValues.DATABASE_USER,
+        password: envValues.DATABASE_PASSWORD,
+        host: envValues.DATABASE_HOST,
+        port: envValues.DATABASE_PORT,
+    },
+    global: {
+        port: envValues.PORT,
+    }
+}
 
-module.exports = config;
+// Export the config object as globalConfig
+export const globalConfig = envConfig.global;  // Add this export
+
+export { envConfig };  // Also export envConfig if needed elsewhere

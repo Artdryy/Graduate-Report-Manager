@@ -1,5 +1,4 @@
-// middlewares/auth.middleware.js
-import { globalConfig } from '../config/env.js';
+import { globalConfig } from '../config/env.js';  
 
 async function validateApiKey(request, reply) {
   try {

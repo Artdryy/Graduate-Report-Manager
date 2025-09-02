@@ -1,63 +1,59 @@
-const fastify = require('fastify');
-const fastifyCompress = require('@fastify/compress');
-const fastifyHelmet = require('@fastify/helmet');
-const fastifyCors = require('@fastify/cors');
-const fastifyFormbody = require('@fastify/formbody');
+import Fastify from 'fastify';
+import { envConfig } from '../config/env.js';
+import { authenticate } from '../config/database.js';
+import fastifyCors from '@fastify/cors';
+import fastifyHelmet from '@fastify/helmet';
+import compress from '@fastify/compress';
+import fastifyFormbody from '@fastify/formbody';
 
-const { envValues } = require('./envSchema');
-const { validateApiKey } = require('../middlewares/auth.middleware');
+import router from '../routes/index.js';  // Add `.js`
+import { handleError, handleNotFound } from '../middlewares/error.middleware.js';  // Add `.js`
 
-const createServer = () => {
-  const app = fastify({
-    logger: envValues.NODE_ENV === 'production' ? 'info' : 'debug',
-    bodyLimit: 50 * 1024 * 1024,
-  });
+import RolesMiddleware from '../middlewares/roles.middleware.js';  // Add `.js`
+import CompaniesMiddleware from '../middlewares/companies.middleware.js';  // Add `.js`
+import ModulesMiddleware from '../middlewares/modules.middleware.js';  // Add `.js`
 
-  // Plugins base
-  app.register(fastifyCompress);
-  app.register(fastifyHelmet, { contentSecurityPolicy: false });
-  app.register(fastifyCors, {
-    origin: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'api-key'],
-    credentials: true,
-  });
-  app.register(fastifyFormbody);
+const fastify = Fastify({
+  logger: true,
+  bodyLimit: 50 * 1024 * 1024,
+})
 
-  // Hook de autenticación por API Key (excepto preflight)
-  app.addHook('onRequest', (request, reply, done) => {
-    if (request.raw.method === 'OPTIONS') return done();
-    return validateApiKey(request, reply).then(() => done()).catch(done);
-  });
+// Middlewares de seguridad y parsing
+fastify.register(fastifyHelmet, { contentSecurityPolicy: false })
+fastify.register(fastifyCors,   { origin: true, optionsSuccessStatus: 200 })
+fastify.register(fastifyFormbody)
+fastify.register(compress)
 
-  // Health check directo (sin routes/index.js para mantenerlo simple)
-  app.register(require('../routes/health-check.routes'), { prefix: '/api/health-check' });
+// Decoraciones para los middleware
+fastify.decorate('rolesMiddleware', RolesMiddleware)
+fastify.decorate('companiesMiddleware', CompaniesMiddleware)
+fastify.decorate('modulesMiddleware', ModulesMiddleware)
 
-  // ---- Handlers de error/not found ----
-  app.setErrorHandler((err, request, reply) => {
-    request.log?.error?.(err);
-    const statusCode = err.statusCode || 500;
-    reply.status(statusCode).send({
-      status: false,
-      message: err.message || 'Internal Server Error',
-      data: null,
-    });
-  });
 
-  app.setNotFoundHandler((request, reply) => {
-    reply.status(404).send({
-      status: false,
-      message: 'Not Found',
-      data: null,
-    });
-  });
+// Método helper para respuestas exitosas
+fastify.decorateReply('sendSuccess', function({
+  status     = true,
+  statusCode = 200,
+  message    = 'Operación exitosa',
+  data       = null,
+}) {
+  this.status(statusCode).send({ status, message, data })
+})
 
-  // Helper para respuestas exitosas
-  app.decorateReply('sendSuccess', function ({ status = true, statusCode = 200, message = 'Success', data = null } = {}) {
-    this.status(statusCode).send({ status, message, data });
-  });
+// Rutas bajo /api
+fastify.register(router, { prefix: '/api' })
 
-  return app;
-};
+// Handlers de error y ruta no encontrada
+fastify.setErrorHandler(handleError)
+fastify.setNotFoundHandler(handleNotFound)
 
-module.exports = createServer;
+// Ruta raíz de comprobación
+fastify.get('/', async (request, reply) => {
+  return reply.sendSuccess({
+    message: 'API is running',
+    data: {}
+  })
+})
+
+// Exporting the Fastify instance as the server
+export default fastify;  // Default export

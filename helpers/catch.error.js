@@ -1,8 +1,8 @@
 export async function catchError(promise) {
-    try {
-        const data = await promise;
-        return [null, data];
-    } catch (error) {
-        return [error, null];
-    }
+  try {
+    const data = await promise;
+    return [data, null];
+  } catch (error) {
+    return [null, error];
+  }
 }

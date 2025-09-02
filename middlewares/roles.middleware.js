@@ -1,14 +1,38 @@
-import { handleError } from '../middlewares/error.middleware.js';
-import RolesValidator from '../validators/roles.validator.js';
+import RolesValidator from "../validators/roles.validator.js";
+import { handleError } from "./error.middleware.js";
 
 class RolesMiddleware {
-  createRole = async (request, reply) => {
-    try {
-      request.createRole = await RolesValidator.createRole().validateAsync({ ...request.body });
-    } catch (error) {
-      return handleError(error, request, reply);
+    createRole = async (req, reply) => {
+        try {
+            req.body = await RolesValidator.createRole().validateAsync(req.body);
+        } catch (err) {
+            handleError(err, req, reply);
+        }
     }
-  };
+
+    getRoles = async (req, reply) => {
+        try {
+            req.query = await RolesValidator.getRoles().validateAsync(req.query);
+        } catch (err) {
+            handleError(err, req, reply);
+        }
+    }
+
+    updateRole = async (req, reply) => {
+        try {
+            req.body = await RolesValidator.updateRole().validateAsync(req.body);
+        } catch (err) {
+            handleError(err, req, reply);
+        }
+    }
+
+    deleteRole = async (req, reply) => {
+        try {
+            req.params = await RolesValidator.deleteRole().validateAsync(req.params);
+        } catch (err) {
+            handleError(err, req, reply);
+        }
+    }
 }
 
 export default new RolesMiddleware();
