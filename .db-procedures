@@ -1,0 +1,1006 @@
+-- STORED PROCEDURES --
+
+------------------------
+       -- ROLES --
+------------------------
+
+create or replace procedure residencias.create_role(
+    in p_role_name varchar(100),
+    in p_description text  
+) 
+begin
+    if p_role_name is null or p_role_name = '' then
+        signal sqlstate '45000' set message_text = 'Role cannot be null or empty';
+    end if;
+    
+    if p_description is null or p_description = '' then
+        signal sqlstate '45000' set message_text = 'Description cannot be null or empty'; 	
+    end if;
+    
+    if exists (select 1 from residencias.roles where role_name = p_role_name) then
+        signal sqlstate '45000' set message_text = 'Role already exists in database';
+    else
+        insert into residencias.roles(role_name, description)
+        values (p_role_name, p_description);
+        
+        select last_insert_id() as id;
+    end if;
+end;
+
+create or replace procedure residencias.update_role(
+    in p_role_id bigint,
+    in p_role_name varchar(100),
+    in p_description text
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_role_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid role id';
+    end if;
+
+    if p_role_name is null or p_role_name = '' then
+        signal sqlstate '45000' set message_text = 'Role cannot be null or empty';
+    end if;
+
+    if p_description is null or p_description = '' then
+        signal sqlstate '45000' set message_text = 'Description cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id from residencias.roles where id = p_role_id;
+    
+    if verify_id = 0 then 
+        signal sqlstate '45000' set message_text = 'Role not found';
+    end if;
+
+    select count(*) into verify_id 
+    from residencias.roles
+    where role_name = p_role_name and id <> p_role_id;
+    
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'Role name already exists in use';
+    end if;
+
+    update residencias.roles 
+    set role_name = p_role_name,
+        description = p_description
+    where id = p_role_id;
+
+    select p_role_id;
+end;
+
+
+create or replace procedure residencias.delete_role(
+    in p_role_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_role_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid role id';
+    end if;
+
+    select count(*) into verify_id from residencias.roles where id = p_role_id;
+    
+    if verify_id = 0 then 
+        signal sqlstate '45000' set message_text = 'Role not found in database';
+    else
+        delete from residencias.roles where id = p_role_id;
+        set result_message = 'Role deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+
+create or replace procedure residencias.get_roles()
+begin
+    select id, role_name, description from residencias.roles;
+end;
+
+------------------------
+    -- COMPANIES --
+------------------------
+
+create or replace procedure residencias.create_company(
+    in p_company_name varchar(150),
+    in p_description text,
+    in p_address varchar(150),
+    in p_phone_number varchar(30),
+    in p_email varchar(100)
+)
+begin
+    if p_company_name is null or p_company_name = '' then
+        signal sqlstate '45000' set message_text = 'Company name cannot be null or empty';
+    end if;
+
+    if p_description is null or p_description = '' then
+        signal sqlstate '45000' set message_text = 'Description cannot be null or empty';
+    end if;
+
+    if p_email is null or p_email = '' then
+        signal sqlstate '45000' set message_text = 'Email cannot be null or empty';
+    end if;
+
+    if exists (select 1 from residencias.companies where company_name = p_company_name) then
+        signal sqlstate '45000' set message_text = 'Company already exists in database';
+    else
+        insert into residencias.companies(company_name, description, address, phone_number, email)
+        values (p_company_name, p_description, p_address, p_phone_number, p_email);
+        
+        select last_insert_id() as id;
+    end if;
+end;
+
+create or replace procedure residencias.update_company(
+    in p_company_id bigint,
+    in p_company_name varchar(150),
+    in p_description text,
+    in p_address varchar(150),
+    in p_phone_number varchar(30),
+    in p_email varchar(100)
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_company_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid company id';
+    end if;
+
+    if p_company_name is null or p_company_name = '' then
+        signal sqlstate '45000' set message_text = 'Company name cannot be null or empty';
+    end if;
+
+    if p_description is null or p_description = '' then
+        signal sqlstate '45000' set message_text = 'Description cannot be null or empty';
+    end if;
+
+    if p_email is null or p_email = '' then
+        signal sqlstate '45000' set message_text = 'Email cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id from residencias.companies where id = p_company_id;
+    
+    if verify_id = 0 then 
+        signal sqlstate '45000' set message_text = 'Company not found';
+    end if;
+
+    select count(*) into verify_id 
+    from residencias.companies
+    where company_name = p_company_name and id <> p_company_id;
+    
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'Company name already exists in use';
+    end if;
+
+    update residencias.companies 
+    set company_name = p_company_name,
+        description = p_description,
+        address = p_address,
+        phone_number = p_phone_number,
+        email = p_email
+    where id = p_company_id;
+
+    select p_company_id;
+end;
+
+create or replace procedure residencias.delete_company(
+    in p_company_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_company_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid company id';
+    end if;
+
+    select count(*) into verify_id from residencias.companies where id = p_company_id;
+    
+    if verify_id = 0 then 
+        signal sqlstate '45000' set message_text = 'Company not found in database';
+    else
+        delete from residencias.companies where id = p_company_id;
+        set result_message = 'Company deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+create or replace procedure residencias.get_companies(
+)
+begin
+	select id, company_name, description, address, phone_number, email from residencias.companies;
+end;
+
+------------------------
+     -- MODULES --
+------------------------
+create or replace procedure residencias.create_module(
+	in p_module_name varchar(20)
+)
+begin
+	if p_module_name is null or p_module_name = '' then
+		signal sqlstate '45000' set message_text = 'Module name cannot be null or empty';
+	end if;
+
+	if exists (select 1 from residencias.modules where module_name = p_module_name) then
+		signal sqlstate '45000' set message_text = 'Module already exists in database';
+	else
+		insert into residencias.modules(module_name)
+		values (p_module_name);
+		select last_insert_id() as id;
+	end if;
+end;
+
+create or replace procedure residencias.update_module(
+	in p_module_id bigint,
+	in p_module_name varchar(20)
+)
+begin
+	declare verify_id tinyint unsigned;
+
+	if p_module_id is null then
+		signal sqlstate '45000' set message_text = 'Must provide a valid module id';
+	end if;
+
+	if p_module_name is null or p_module_name = '' then
+		signal sqlstate '45000' set message_text = 'Module name cannot be null or empty';
+	end if;
+
+	select count(*) into verify_id from residencias.modules where id = p_module_id;
+
+	if verify_id = 0 then
+		signal sqlstate '45000' set message_text = 'Module not found';
+	end if;
+
+	select count(*) into verify_id from residencias.modules where module_name = p_module_name and id <> p_module_id;
+
+	if verify_id > 0 then
+		signal sqlstate '45000' set message_text = 'Module name already exists in use';
+	end if;
+
+	update residencias.modules
+	set module_name = p_module_name
+	where id = p_module_id;
+
+	select p_module_id;
+end;
+
+create or replace procedure residencias.delete_module(
+	in p_module_id bigint
+)
+begin
+	declare verify_id tinyint unsigned;
+	declare result_message varchar(255);
+
+	if p_module_id is null then
+		signal sqlstate '45000' set message_text = 'Must provide a valid module id';
+	end if;
+
+	select count(*) into verify_id from residencias.modules where id = p_module_id;
+
+	if verify_id = 0 then
+		signal sqlstate '45000' set message_text = 'Module not found in database';
+	else
+		delete from residencias.modules where id = p_module_id;
+		set result_message = 'Module deleted successfully';
+	end if;
+
+	select result_message as message;
+end;
+
+create or replace procedure residencias.get_modules()
+begin
+	select id, module_name from residencias.modules;
+end;
+
+------------------------
+    -- KEYWORDS --
+------------------------
+
+create or replace procedure residencias.create_keyword(
+    in p_keyword varchar(30)
+)
+begin
+    if p_keyword is null or trim(p_keyword) = '' then
+        signal sqlstate '45000' set message_text = 'Keyword cannot be null or empty';
+    end if;
+
+    if exists (select 1 from residencias.keywords where keyword = p_keyword) then
+        signal sqlstate '45000' set message_text = 'Keyword already exists in database';
+    end if;
+
+    insert into residencias.keywords(keyword)
+    values (p_keyword);
+
+    select last_insert_id() as id;
+end;
+
+create or replace procedure residencias.update_keyword(
+    in p_keyword_id bigint,
+    in p_keyword varchar(30)
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_keyword_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid keyword id';
+    end if;
+
+    if p_keyword is null or trim(p_keyword) = '' then
+        signal sqlstate '45000' set message_text = 'Keyword cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id from residencias.keywords where id = p_keyword_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'Keyword not found';
+    end if;
+
+    select count(*) into verify_id
+    from residencias.keywords
+    where keyword = p_keyword and id <> p_keyword_id;
+
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'Keyword already in use';
+    end if;
+
+    update residencias.keywords
+    set keyword = p_keyword
+    where id = p_keyword_id;
+
+    select p_keyword_id as id;
+end;
+
+create or replace procedure residencias.delete_keyword(
+    in p_keyword_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_keyword_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid keyword id';
+    end if;
+
+    select count(*) into verify_id from residencias.keywords where id = p_keyword_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'Keyword not found in database';
+    else
+        delete from residencias.keywords where id = p_keyword_id;
+        set result_message = 'Keyword deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+create or replace procedure residencias.get_keywords()
+begin
+    select id, keyword
+    from residencias.keywords;
+end;
+
+
+------------------------
+    -- SEMESTER --
+------------------------
+
+create or replace procedure residencias.create_semester(
+    in p_semester varchar(30)
+)
+begin
+    if p_semester is null or trim(p_semester) = '' then
+        signal sqlstate '45000' set message_text = 'Semester cannot be null or empty';
+    end if;
+
+    if exists (select 1 from residencias.semester where semester = p_semester) then
+        signal sqlstate '45000' set message_text = 'Semester already exists in database';
+    end if;
+
+    insert into residencias.semester(semester)
+    values (p_semester);
+
+    select last_insert_id() as id;
+end;
+
+create or replace procedure residencias.update_semester(
+    in p_semester_id bigint,
+    in p_semester varchar(30)
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_semester_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid semester id';
+    end if;
+
+    if p_semester is null or trim(p_semester) = '' then
+        signal sqlstate '45000' set message_text = 'Semester cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id from residencias.semester where id = p_semester_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'Semester not found';
+    end if;
+
+    select count(*) into verify_id
+    from residencias.semester
+    where semester = p_semester and id <> p_semester_id;
+
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'Semester already in use';
+    end if;
+
+    update residencias.semester
+    set semester = p_semester
+    where id = p_semester_id;
+
+    select p_semester_id as id;
+end;
+
+create or replace procedure residencias.delete_semester(
+    in p_semester_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_semester_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid semester id';
+    end if;
+
+    select count(*) into verify_id from residencias.semester where id = p_semester_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'Semester not found in database';
+    else
+        delete from residencias.semester where id = p_semester_id;
+        set result_message = 'Semester deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+create or replace procedure residencias.get_semesters()
+begin
+    select id, semester
+    from residencias.semester;
+end;
+
+------------------------
+   -- PERMISSIONS --
+------------------------
+
+create or replace procedure residencias.create_permission(
+    in p_permission varchar(50)
+)
+begin
+    if p_permission is null or trim(p_permission) = '' then
+        signal sqlstate '45000' set message_text = 'Permission cannot be null or empty';
+    end if;
+
+    if exists (select 1 from residencias.permissions where permission = p_permission) then
+        signal sqlstate '45000' set message_text = 'Permission already exists in database';
+    end if;
+
+    insert into residencias.permissions(permission)
+    values (p_permission);
+
+    select last_insert_id() as id;
+end;
+
+create or replace procedure residencias.update_permission(
+    in p_permission_id bigint,
+    in p_permission varchar(50)
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_permission_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid permission id';
+    end if;
+
+    if p_permission is null or trim(p_permission) = '' then
+        signal sqlstate '45000' set message_text = 'Permission cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id from residencias.permissions where id = p_permission_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'Permission not found';
+    end if;
+
+    select count(*) into verify_id
+    from residencias.permissions
+    where permission = p_permission and id <> p_permission_id;
+
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'Permission already in use';
+    end if;
+
+    update residencias.permissions
+    set permission = p_permission
+    where id = p_permission_id;
+
+    select p_permission_id as id;
+end;
+
+create or replace procedure residencias.delete_permission(
+    in p_permission_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_permission_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid permission id';
+    end if;
+
+    select count(*) into verify_id from residencias.permissions where id = p_permission_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'Permission not found in database';
+    else
+        delete from residencias.permissions where id = p_permission_id;
+        set result_message = 'Permission deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+create or replace procedure residencias.get_permissions()
+begin
+    select id, permission
+    from residencias.permissions;
+end;
+
+
+------------------------
+      -- USERS --
+------------------------
+
+create or replace procedure residencias.create_user(
+    in p_user_name varchar(100),
+    in p_password varchar(255),
+    in p_email varchar(100),
+    in p_role_id bigint,
+    in p_is_active tinyint,
+    in p_code varchar(10)
+)
+begin
+    if p_user_name is null or trim(p_user_name) = '' then
+        signal sqlstate '45000' set message_text = 'User name cannot be null or empty';
+    end if;
+
+    if p_password is null or trim(p_password) = '' then
+        signal sqlstate '45000' set message_text = 'Password cannot be null or empty';
+    end if;
+
+    if p_email is null or trim(p_email) = '' then
+        signal sqlstate '45000' set message_text = 'Email cannot be null or empty';
+    end if;
+
+    if p_role_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid role id';
+    end if;
+
+    if not exists (select 1 from residencias.roles where id = p_role_id) then
+        signal sqlstate '45000' set message_text = 'Role not found';
+    end if;
+
+    if exists (select 1 from residencias.users where user_name = p_user_name) then
+        signal sqlstate '45000' set message_text = 'User name already exists';
+    end if;
+
+    insert into residencias.users(user_name, password, email, role_id, is_active, code)
+    values (p_user_name, p_password, p_email, p_role_id, ifnull(p_is_active,1), p_code);
+
+    select last_insert_id() as id;
+end;
+
+create or replace procedure residencias.update_user(
+    in p_user_id bigint,
+    in p_user_name varchar(100),
+    in p_email varchar(100),
+    in p_role_id bigint,
+    in p_is_active tinyint
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_user_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid user id';
+    end if;
+
+    select count(*) into verify_id from residencias.users where id = p_user_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'User not found';
+    end if;
+
+    if p_user_name is null or trim(p_user_name) = '' then
+        signal sqlstate '45000' set message_text = 'User name cannot be null or empty';
+    end if;
+
+    if p_email is null or trim(p_email) = '' then
+        signal sqlstate '45000' set message_text = 'Email cannot be null or empty';
+    end if;
+
+    if p_role_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid role id';
+    end if;
+
+    if not exists (select 1 from residencias.roles where id = p_role_id) then
+        signal sqlstate '45000' set message_text = 'Role not found';
+    end if;
+
+    select count(*) into verify_id
+    from residencias.users
+    where user_name = p_user_name and id <> p_user_id;
+
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'User name already exists';
+    end if;
+
+    update residencias.users
+    set user_name = p_user_name,
+        email = p_email,
+        role_id = p_role_id,
+        is_active = ifnull(p_is_active,1)
+    where id = p_user_id;
+
+    select p_user_id as id;
+end;
+
+
+create or replace procedure residencias.delete_user(
+    in p_user_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_user_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid user id';
+    end if;
+
+    select count(*) into verify_id from residencias.users where id = p_user_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'User not found in database';
+    else
+        delete from residencias.users where id = p_user_id;
+        set result_message = 'User deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+create or replace procedure residencias.get_users()
+begin
+    select id, user_name, email, role_id, is_active
+    from residencias.users;
+end;
+
+------------------------
+     -- PASSWORD --
+------------------------
+
+create or replace procedure residencias.change_password(
+    in p_user_id bigint,
+    in p_new_password varchar(255),
+    in p_code varchar(10)
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare stored_code varchar(10);
+    
+    if p_user_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid user id';
+    end if;
+
+    if p_new_password is null or trim(p_new_password) = '' then
+        signal sqlstate '45000' set message_text = 'New password cannot be null or empty';
+    end if;
+
+    if p_code is null or trim(p_code) = '' then
+        signal sqlstate '45000' set message_text = 'Code cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id from residencias.users where id = p_user_id;
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'User not found';
+    end if;
+
+    select code into stored_code from residencias.users where id = p_user_id;
+
+    if stored_code != p_code then
+        signal sqlstate '45000' set message_text = 'Invalid or expired code';
+    end if;
+
+    update residencias.users
+    set password = p_new_password
+    where id = p_user_id;
+
+    update residencias.users
+    set code = NULL
+    where id = p_user_id;
+
+    select 'Password updated successfully' as message;
+end;
+
+
+create or replace procedure residencias.generate_code(
+    in p_user_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare code_value varchar(10);
+
+    if p_user_id is null then
+        signal sqlstate '45000' set message_text = 'Must provide a valid user id';
+    end if;
+
+    select count(*) into verify_id from residencias.users where id = p_user_id;
+
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'User not found';
+    end if;
+
+    set code_value = concat(
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1),
+        substring('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', floor(1 + rand()*36), 1)
+    );
+
+    update residencias.users
+    set code = code_value
+    where id = p_user_id;
+
+    select code_value as code;
+end;
+
+create or replace procedure residencias.sp_create_refresh_token(
+    in p_user_id bigint,
+    in p_token varchar(500),
+    in p_expires_at timestamp
+)
+begin
+    if p_user_id is null or p_token is null or p_expires_at is null then
+        signal sqlstate '45000' set message_text = 'user id, token, and expiration cannot be null';
+    end if;
+
+    delete from residencias.user_refresh_tokens where user_id = p_user_id;
+
+    insert into residencias.user_refresh_tokens(user_id, token, expires_at)
+    values (p_user_id, p_token, p_expires_at);
+
+    select last_insert_id() as id;
+end;
+
+create or replace procedure residencias.sp_delete_refresh_token(
+    in p_token varchar(500)
+)
+begin
+    if p_token is null then
+        signal sqlstate '45000' set message_text = 'token cannot be null';
+    end if;
+
+    delete from residencias.user_refresh_tokens where token = p_token;
+
+    select row_count() as affected_rows;
+end;
+
+create or replace procedure residencias.sp_find_user_by_refresh_token(
+    in p_token varchar(500)
+)
+begin
+    select u.id, u.user_name, u.email, u.role_id, u.is_active
+    from residencias.users u
+    join residencias.user_refresh_tokens rt on u.id = rt.user_id
+    where rt.token = p_token and rt.expires_at > now();
+end;
+
+create or replace procedure residencias.sp_find_user_by_email(
+	in p_email varchar(100)
+)
+begin
+	select id, user_name, password, email, role_id, is_active, code
+	from residencias.users
+	where email = p_email;
+end;
+
+------------------------
+     -- REPORTS --
+------------------------
+
+create or replace procedure residencias.create_report(
+    in p_student_name varchar(100),
+    in p_control_number varchar(15),
+    in p_major varchar(100),
+    in p_report_title varchar(255),
+    in p_pdf_route varchar(500),
+    in p_company_id bigint,
+    in p_semester_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_student_name is null or trim(p_student_name) = '' then
+        signal sqlstate '45000' set message_text = 'student name cannot be null or empty';
+    end if;
+
+    if p_control_number is null or trim(p_control_number) = '' then
+        signal sqlstate '45000' set message_text = 'control number cannot be null or empty';
+    end if;
+
+    if p_company_id is null then
+        signal sqlstate '45000' set message_text = 'must provide a valid company id';
+    end if;
+
+    if p_semester_id is null then
+        signal sqlstate '45000' set message_text = 'must provide a valid semester id';
+    end if;
+
+    if not exists (select 1 from residencias.companies where id = p_company_id) then
+        signal sqlstate '45000' set message_text = 'company not found';
+    end if;
+
+    if not exists (select 1 from residencias.semester where id = p_semester_id) then
+        signal sqlstate '45000' set message_text = 'semester not found';
+    end if;
+
+    select count(*) into verify_id
+    from residencias.reports
+    where control_number = p_control_number;
+
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'control number already exists';
+    end if;
+
+    insert into residencias.reports(
+        student_name,
+        control_number,
+        major,
+        report_title,
+        pdf_route,
+        company_id,
+        semester_id
+    )
+    values (
+        p_student_name,
+        p_control_number,
+        p_major,
+        p_report_title,
+        p_pdf_route,
+        p_company_id,
+        p_semester_id
+    );
+
+    select last_insert_id() as id;
+end;
+
+create or replace procedure residencias.update_report(
+    in p_report_id bigint,
+    in p_student_name varchar(100),
+    in p_control_number varchar(15),
+    in p_major varchar(100),
+    in p_report_title varchar(255),
+    in p_pdf_route varchar(500),
+    in p_company_id bigint,
+    in p_semester_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+
+    if p_report_id is null then
+        signal sqlstate '45000' set message_text = 'must provide a valid report id';
+    end if;
+
+    select count(*) into verify_id from residencias.reports where id = p_report_id;
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'report not found';
+    end if;
+
+    if p_student_name is null or trim(p_student_name) = '' then
+        signal sqlstate '45000' set message_text = 'student name cannot be null or empty';
+    end if;
+
+    if p_control_number is null or trim(p_control_number) = '' then
+        signal sqlstate '45000' set message_text = 'control number cannot be null or empty';
+    end if;
+
+    select count(*) into verify_id
+    from residencias.reports
+    where control_number = p_control_number and id <> p_report_id;
+    if verify_id > 0 then
+        signal sqlstate '45000' set message_text = 'control number already exists';
+    end if;
+
+    if p_company_id is null then
+        signal sqlstate '45000' set message_text = 'must provide a valid company id';
+    end if;
+
+    if p_semester_id is null then
+        signal sqlstate '45000' set message_text = 'must provide a valid semester id';
+    end if;
+
+    update residencias.reports
+    set student_name = p_student_name,
+        control_number = p_control_number,
+        major = p_major,
+        report_title = p_report_title,
+        pdf_route = p_pdf_route,
+        company_id = p_company_id,
+        semester_id = p_semester_id
+    where id = p_report_id;
+
+    select p_report_id as id;
+end;
+
+create or replace procedure residencias.delete_report(
+    in p_report_id bigint
+)
+begin
+    declare verify_id tinyint unsigned;
+    declare result_message varchar(255);
+
+    if p_report_id is null then
+        signal sqlstate '45000' set message_text = 'must provide a valid report id';
+    end if;
+
+    select count(*) into verify_id from residencias.reports where id = p_report_id;
+    if verify_id = 0 then
+        signal sqlstate '45000' set message_text = 'report not found';
+    else
+        delete from residencias.reports where id = p_report_id;
+        set result_message = 'report deleted successfully';
+    end if;
+
+    select result_message as message;
+end;
+
+create or replace procedure residencias.get_reports()
+begin
+    select 
+        id,
+        student_name,
+        control_number,
+        major,
+        report_title,
+        pdf_route,
+        company_id,
+        semester_id
+    from residencias.reports;
+end;
+
+create or replace procedure residencias.get_reports_by_keyword(
+    in p_keyword varchar(30)
+)
+begin
+    select r.id,
+           r.student_name,
+           r.control_number,
+           r.major,
+           r.report_title,
+           r.pdf_route,
+           r.company_id,
+           r.semester_id
+    from residencias.reports r
+    join residencias.reports_keywords rk on r.id = rk.report_id
+    join residencias.keywords k on rk.keyword_id = k.id
+    where k.keyword = p_keyword;
+end;
+
+

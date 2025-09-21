@@ -1,0 +1,118 @@
+create table residencias.roles(
+	id bigint(20) unsigned not null auto_increment,
+	role_name varchar(100) not null,
+	description text default null,
+	primary key (id),
+	unique key uk_rolename (role_name)
+);
+
+create table residencias.companies(
+	id bigint(20) unsigned not null auto_increment,
+	company_name varchar(150) not null,
+	description text default null,
+	address varchar(150) default null,
+	phone_number varchar(30) default null,
+	email varchar(100) default null,
+	primary key (id),
+	unique key uk_compname (company_name)
+);
+
+create table residencias.modules(
+	id bigint(20) unsigned not null auto_increment,
+	module_name varchar(20) not null,
+	primary key (id),
+	unique key uk_modname (module_name)
+);
+
+create table residencias.permissions(
+	id bigint(20) unsigned not null auto_increment,
+	permission varchar(50) not null,
+	primary key (id),
+	unique key uk_permname (permission)
+);
+
+create table residencias.semester(
+	id bigint(20) unsigned not null auto_increment,
+	semester varchar (30) not null,
+	primary key (id),
+	unique key uk_semname (semester)
+);
+
+create table residencias.keywords(
+	id bigint(20) unsigned not null auto_increment,
+	keyword varchar(30) default null,
+	primary key (id),
+	unique key uk_keyname (keyword)
+);
+
+create table residencias.users (
+	id bigint(20) unsigned not null auto_increment,
+	user_name varchar(100) not null,
+	password varchar(255) not null,
+	email varchar(100) not null,
+	role_id bigint(20) unsigned not null,
+	is_active tinyint(1) default 1,
+	code varchar(10) default null,
+	primary key (id),
+	unique key uk_username (user_name),
+	key kid_roleid (role_id),
+	constraint fk_users_roles foreign key (role_id) references residencias.roles(id) on update cascade on delete cascade
+);
+
+create table residencias.reports (
+	id bigint(20) unsigned not null auto_increment,
+	student_name varchar(100) not null,
+	control_number varchar(15) not null,
+	major varchar (100) default null,
+	report_title varchar (255) default null,
+	pdf_route varchar(500) default null,
+	company_id bigint(20) unsigned not null,
+	semester_id bigint (20) unsigned not null,
+	primary key (id),
+	unique key uk_ctrlnum (control_number),
+	constraint fk_companyreport foreign key (company_id) references residencias.companies(id),
+	constraint fk_semreport foreign key (semester_id) references residencias.semester(id)
+);
+
+create table residencias.user_refresh_tokens(
+	id bigint(20) unsigned not null auto_increment,
+	user_id bigint unsigned not null,
+	token varchar(500) not null,
+	expires_at timestamp not null,
+	created_at timestamp default current_timestamp,
+	primary key (id),
+	constraint fk_userid_refresh_tokens foreign key (user_id) references residencias.users(id) on delete cascade 
+);
+
+create table residencias.roles_modules (
+    role_id bigint(20) unsigned not null,
+    module_id bigint(20) unsigned not null,
+    is_visible tinyint(1) default 1,
+    primary key (role_id, module_id),
+    constraint fk_roles_modules_role_id foreign key (role_id) references residencias.roles(id) on update cascade on delete cascade,
+    constraint fk_roles_modules_module_id foreign key (module_id) references residencias.modules(id) on update cascade on delete cascade
+);
+
+create table residencias.roles_modules_permissions (
+    role_id bigint(20) unsigned not null,
+    module_id bigint(20) unsigned not null,
+    permission_id bigint(20) unsigned not null,
+    is_granted tinyint(1) default 1,
+    primary key (role_id, module_id, permission_id),
+    key tk_permission_id (permission_id),
+    constraint fk_roles_modules_permissions_role_id foreign key (role_id) references residencias.roles(id) on update cascade on delete cascade,
+    constraint fk_roles_modules_permissions_module_id foreign key (module_id) references residencias.modules(id) on update cascade on delete cascade,
+    constraint fk_roles_modules_permissions_permission_id foreign key (permission_id) references residencias.permissions(id) on update cascade on delete cascade
+);
+
+create table residencias.reports_keywords(
+	report_id bigint(20) unsigned not null,
+	keyword_id bigint(20) unsigned not null,
+	key tk_report_id (report_id),
+	key tk_keyword_id (keyword_id),
+	constraint fk_report_keys foreign key (report_id) references residencias.reports (id),
+	constraint fk_keyword_rep foreign key (keyword_id) references residencias.keywords (id)
+);
+
+
+
