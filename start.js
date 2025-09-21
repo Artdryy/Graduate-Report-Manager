@@ -1,15 +1,15 @@
 import 'dotenv/config';
-import createServer from './config/server.js'; // This imports the default export from server.js
-import { globalConfig } from './config/env.js'; // This works with the named export
-import { authenticate } from './config/database.js'; // Ensure authenticate is imported correctly
+import createServer from './config/server.js';
+import { globalConfig } from './config/env.js';
+import { authenticate } from './config/database.js'; 
 
 const PORT = globalConfig.port;
 const HOST = '0.0.0.0';
 
 async function start() {
   try {
-    await authenticate(); // Ensure this is called after the import
-  const app = createServer;  // Now `createServer` is the default export from `server.js`
+    await authenticate(); 
+  const app = createServer;  
     await app.listen({ port: PORT, host: HOST });
     app.log.info(`Server listening on http://${HOST}:${PORT}`);
   } catch (err) {

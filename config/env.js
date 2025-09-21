@@ -13,7 +13,6 @@ const envConfig = {
     }
 }
 
-// Export the config object as globalConfig
-export const globalConfig = envConfig.global;  // Add this export
+export const globalConfig = envConfig.global;  
 
-export { envConfig };  // Also export envConfig if needed elsewhere
+export { envConfig }; 

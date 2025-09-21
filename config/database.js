@@ -40,4 +40,4 @@ const executeQuery = async (query, replacements = []) => {
   }
 };
 
-export { sequelize, authenticate, executeQuery };  // Make sure `authenticate` is exported here
+export { sequelize, authenticate, executeQuery }; 
