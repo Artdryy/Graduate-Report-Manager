@@ -4,7 +4,7 @@
 
 ### Create Role
 ```http
-POST http://localhost:3000/api/roles
+POST http://localhost:3000/api/roles/create
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -17,14 +17,14 @@ POST http://localhost:3000/api/roles
 
 ### Get All Roles
 ```http
-GET http://localhost:3000/api/roles
+GET http://localhost:3000/api/roles/list
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
 
 ### Update Role
 ```http
-PUT http://localhost:3000/api/roles
+PUT http://localhost:3000/api/roles/update
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -38,7 +38,7 @@ PUT http://localhost:3000/api/roles
 
 ### Delete Role
 ```http
-DELETE http://localhost:3000/api/roles/:role_id
+DELETE http://localhost:3000/api/roles/delete/:role_id
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **URL Parameters**: 

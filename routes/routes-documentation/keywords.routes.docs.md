@@ -4,7 +4,7 @@
 
 ### Create Keyword
 ```http
-POST http://localhost:3000/api/keywords
+POST http://localhost:3000/api/keywords/create
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -16,14 +16,14 @@ POST http://localhost:3000/api/keywords
 
 ### Get All Keywords
 ```http
-GET http://localhost:3000/api/keywords
+GET http://localhost:3000/api/keywords/list
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
 
 ### Update Keyword
 ```http
-PUT http://localhost:3000/api/keywords
+PUT http://localhost:3000/api/keywords/update
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -36,7 +36,7 @@ PUT http://localhost:3000/api/keywords
 
 ### Delete Keyword
 ```http
-DELETE http://localhost:3000/api/keywords/:keyword_id
+DELETE http://localhost:3000/api/keywords/delete/:keyword_id
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **URL Parameters**: 

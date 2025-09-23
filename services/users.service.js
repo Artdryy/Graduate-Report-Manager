@@ -39,13 +39,14 @@ class UsersService {
   }
 
   async requestPasswordReset(email) {
-  const user = await UsersRepository.findUserByEmail({ email });
-  if (user) {
-    const [result, error] = await catchError(UsersRepository.generateCode({ user_id: user.id }));
-    if (error) throw error;
-    await EmailService.sendPasswordResetEmail(email, result.code);
+    const user = await UsersRepository.findUserByEmail({ email });
+    if (user) {
+      const [result, error] = await catchError(UsersRepository.generateCode({ user_id: user.id }));
+      if (error) throw error;
+      await EmailService.sendPasswordResetEmail(email, result.code);
+    }
   }
-}
+  
   async resetPassword({ email, code, newPassword }) {
     const user = await UsersRepository.findUserByEmail({ email });
 
@@ -59,7 +60,7 @@ class UsersService {
     const [result, error] = await catchError(UsersRepository.changePassword({
       user_id: user.id,
       new_password: newPassword,
-      code: code 
+      code: code
     }));
     if (error) throw error;
     return result;
@@ -79,12 +80,12 @@ class UsersService {
 
     const accessTokenPayload = { userId: user.id, roleId: user.role_id };
     const accessToken = jwt.sign(accessTokenPayload, envValues.JWT_SECRET, {
-      expiresIn: '15m' 
+      expiresIn: envValues.ACCESS_TOKEN_EXPIRATION 
     });
 
     const refreshToken = crypto.randomBytes(64).toString('hex');
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + envValues.REFRESH_TOKEN_EXPIRATION_DAYS);
 
     await UsersRepository.saveRefreshToken(user.id, refreshToken, expiresAt);
 
@@ -94,13 +95,15 @@ class UsersService {
   async refreshToken(token) {
     const user = await UsersRepository.findUserByRefreshToken(token);
     if (!user) {
-      throw new HttpError('Sesión inválida o expirada', 403); 
+      throw new HttpError('Sesión inválida o expirada', 403);
     }
 
     const accessTokenPayload = { userId: user.id, roleId: user.role_id };
+    // --- AND UPDATE THIS ---
     const newAccessToken = jwt.sign(accessTokenPayload, envValues.JWT_SECRET, {
-      expiresIn: '15m'
+      expiresIn: envValues.ACCESS_TOKEN_EXPIRATION
     });
+    // -----------------------
 
     return { accessToken: newAccessToken };
   }

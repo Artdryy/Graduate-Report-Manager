@@ -4,7 +4,7 @@
 
 ### Create Module
 ```http
-POST http://localhost:3000/api/modules
+POST http://localhost:3000/api/modules/create
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -16,14 +16,14 @@ POST http://localhost:3000/api/modules
 
 ### Get All Modules
 ```http
-GET http://localhost:3000/api/modules
+GET http://localhost:3000/api/modules/list
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
 
 ### Update Module
 ```http
-PUT http://localhost:3000/api/modules
+PUT http://localhost:3000/api/modules/update
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -36,7 +36,7 @@ PUT http://localhost:3000/api/modules
 
 ### Delete Module
 ```http
-DELETE http://localhost:3000/api/modules/:module_id
+DELETE http://localhost:3000/api/modules/delete/:module_id
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **URL Parameters**: 

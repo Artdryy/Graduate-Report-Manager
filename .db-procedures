@@ -27,46 +27,54 @@ begin
     end if;
 end;
 
-create or replace procedure residencias.update_role(
-    in p_role_id bigint,
-    in p_role_name varchar(100),
-    in p_description text
+create or replace procedure residencias.update_report(
+    in p_report_id bigint,
+    in p_student_name varchar(100),
+    in p_report_title varchar(255),
+    in p_company_id bigint,
+    in p_semester_id bigint,
+    in p_pdf_route varchar(500),
+    in p_keywords_json json
 )
 begin
-    declare verify_id tinyint unsigned;
+    declare i int default 0;
+    declare v_json_length int;
+    declare v_keyword_id bigint;
 
-    if p_role_id is null then
-        signal sqlstate '45000' set message_text = 'Must provide a valid role id';
+    start transaction;
+
+    update residencias.reports
+    set
+        student_name = p_student_name,
+        report_title = p_report_title,
+        company_id = p_company_id,
+        semester_id = p_semester_id,
+        pdf_route = ifnull(p_pdf_route, pdf_route) 
+    where id = p_report_id;
+
+    if p_keywords_json is not null then
+        delete from residencias.reports_keywords where report_id = p_report_id;
+
+        if json_valid(p_keywords_json) and json_length(p_keywords_json) > 0 then
+            set v_json_length = json_length(p_keywords_json);
+            while i < v_json_length do
+                set v_keyword_id = json_unquote(json_extract(p_keywords_json, concat('$[', i, ']')));
+                insert into residencias.reports_keywords (report_id, keyword_id)
+                values (p_report_id, v_keyword_id);
+                set i = i + 1;
+            end while;
+        end if;
     end if;
 
-    if p_role_name is null or p_role_name = '' then
-        signal sqlstate '45000' set message_text = 'Role cannot be null or empty';
-    end if;
+    commit;
+    select p_report_id as id;
+end;
 
-    if p_description is null or p_description = '' then
-        signal sqlstate '45000' set message_text = 'Description cannot be null or empty';
-    end if;
-
-    select count(*) into verify_id from residencias.roles where id = p_role_id;
-    
-    if verify_id = 0 then 
-        signal sqlstate '45000' set message_text = 'Role not found';
-    end if;
-
-    select count(*) into verify_id 
-    from residencias.roles
-    where role_name = p_role_name and id <> p_role_id;
-    
-    if verify_id > 0 then
-        signal sqlstate '45000' set message_text = 'Role name already exists in use';
-    end if;
-
-    update residencias.roles 
-    set role_name = p_role_name,
-        description = p_description
-    where id = p_role_id;
-
-    select p_role_id;
+create or replace procedure residencias.get_report_pdf_route(
+    in p_report_id bigint
+)
+begin
+    select pdf_route from residencias.reports where id = p_report_id;
 end;
 
 
@@ -98,6 +106,27 @@ create or replace procedure residencias.get_roles()
 begin
     select id, role_name, description from residencias.roles;
 end;
+
+create or replace procedure residencias.check_role_permission(
+    in p_role_id bigint,
+    in p_module_name varchar(20),
+    in p_permission_name varchar(50)
+)
+begin
+    declare has_permission int default 0;
+
+    select 1 into has_permission
+    from residencias.roles_modules_permissions rmp
+    join residencias.modules m on rmp.module_id = m.id
+    join residencias.permissions p on rmp.permission_id = p.id
+    where rmp.role_id = p_role_id
+      and m.module_name = p_module_name
+      and p.permission = p_permission_name
+    limit 1;
+
+    select has_permission as granted;
+end;
+
 
 ------------------------
     -- COMPANIES --
@@ -321,9 +350,9 @@ end;
 create or replace procedure residencias.update_keyword(
     in p_keyword_id bigint,
     in p_keyword varchar(30)
-)
-begin
-    declare verify_id tinyint unsigned;
+	)
+	begin
+	    declare verify_id tinyint unsigned;
 
     if p_keyword_id is null then
         signal sqlstate '45000' set message_text = 'Must provide a valid keyword id';
@@ -559,6 +588,75 @@ begin
 end;
 
 
+create or replace procedure residencias.assign_permissions_to_role(
+    in p_role_id bigint,
+    in p_permissions_json json
+)
+begin
+    declare v_module_id bigint;
+    declare v_permission_id bigint;
+    declare i int default 0;
+    declare v_json_length int;
+
+    if not exists (select 1 from residencias.roles where id = p_role_id) then
+        signal sqlstate '45000' set message_text = 'role not found';
+    end if;
+
+    start transaction;
+
+    delete from residencias.roles_modules_permissions where role_id = p_role_id;
+    delete from residencias.roles_modules where role_id = p_role_id;
+
+    set v_json_length = json_length(p_permissions_json);
+
+    while i < v_json_length do
+        set v_module_id = json_unquote(json_extract(p_permissions_json, concat('$[', i, '].module_id')));
+        set v_permission_id = json_unquote(json_extract(p_permissions_json, concat('$[', i, '].permission_id')));
+
+        insert ignore into residencias.roles_modules (role_id, module_id, is_visible)
+        values (p_role_id, v_module_id, 1);
+
+        insert into residencias.roles_modules_permissions (role_id, module_id, permission_id, is_granted)
+        values (p_role_id, v_module_id, v_permission_id, 1);
+
+        set i = i + 1;
+    end while;
+
+    commit;
+
+    select 'permissions assigned successfully' as message;
+end;
+
+create or replace procedure residencias.get_permissions_for_role(
+    in p_role_id bigint
+)
+begin
+    if not exists (select 1 from residencias.roles where id = p_role_id) then
+        signal sqlstate '45000' set message_text = 'role not found';
+    end if;
+
+    select
+        rmp.role_id,
+        r.role_name,
+        rmp.module_id,
+        m.module_name,
+        rmp.permission_id,
+        p.permission as permission_name
+    from
+        residencias.roles_modules_permissions rmp
+    join
+        residencias.roles r on rmp.role_id = r.id
+    join
+        residencias.modules m on rmp.module_id = m.id
+    join
+        residencias.permissions p on rmp.permission_id = p.id
+    where
+        rmp.role_id = p_role_id
+    order by
+        m.module_name, p.permission;
+end;
+
+
 ------------------------
       -- USERS --
 ------------------------
@@ -686,6 +784,14 @@ begin
     from residencias.users;
 end;
 
+create or replace procedure residencias.find_user_by_name(
+    in p_user_name varchar(100)
+)
+begin
+    select id, user_name, password, email, role_id, is_active, code
+    from residencias.users
+    where user_name = p_user_name;
+end;
 ------------------------
      -- PASSWORD --
 ------------------------
@@ -771,7 +877,7 @@ begin
     select code_value as code;
 end;
 
-create or replace procedure residencias.sp_create_refresh_token(
+create or replace procedure residencias.create_refresh_token(
     in p_user_id bigint,
     in p_token varchar(500),
     in p_expires_at timestamp
@@ -789,7 +895,7 @@ begin
     select last_insert_id() as id;
 end;
 
-create or replace procedure residencias.sp_delete_refresh_token(
+create or replace procedure residencias.delete_refresh_token(
     in p_token varchar(500)
 )
 begin
@@ -802,7 +908,7 @@ begin
     select row_count() as affected_rows;
 end;
 
-create or replace procedure residencias.sp_find_user_by_refresh_token(
+create or replace procedure residencias.find_user_by_refresh_token(
     in p_token varchar(500)
 )
 begin
@@ -812,7 +918,7 @@ begin
     where rt.token = p_token and rt.expires_at > now();
 end;
 
-create or replace procedure residencias.sp_find_user_by_email(
+create or replace procedure residencias.find_user_by_email(
 	in p_email varchar(100)
 )
 begin
@@ -832,120 +938,106 @@ create or replace procedure residencias.create_report(
     in p_report_title varchar(255),
     in p_pdf_route varchar(500),
     in p_company_id bigint,
-    in p_semester_id bigint
+    in p_semester_id bigint,
+    in p_keywords_json json,
+    out p_report_id bigint
 )
 begin
-    declare verify_id tinyint unsigned;
+    declare i int default 0;
+    declare v_json_length int;
+    declare v_keyword_id bigint;
 
     if p_student_name is null or trim(p_student_name) = '' then
-        signal sqlstate '45000' set message_text = 'student name cannot be null or empty';
+        signal sqlstate '45000' set message_text = 'student name cannot be empty';
     end if;
 
-    if p_control_number is null or trim(p_control_number) = '' then
-        signal sqlstate '45000' set message_text = 'control number cannot be null or empty';
-    end if;
-
-    if p_company_id is null then
-        signal sqlstate '45000' set message_text = 'must provide a valid company id';
-    end if;
-
-    if p_semester_id is null then
-        signal sqlstate '45000' set message_text = 'must provide a valid semester id';
-    end if;
-
-    if not exists (select 1 from residencias.companies where id = p_company_id) then
-        signal sqlstate '45000' set message_text = 'company not found';
-    end if;
-
-    if not exists (select 1 from residencias.semester where id = p_semester_id) then
-        signal sqlstate '45000' set message_text = 'semester not found';
-    end if;
-
-    select count(*) into verify_id
-    from residencias.reports
-    where control_number = p_control_number;
-
-    if verify_id > 0 then
+    if exists (select 1 from residencias.reports where control_number = p_control_number) then
         signal sqlstate '45000' set message_text = 'control number already exists';
     end if;
 
-    insert into residencias.reports(
-        student_name,
-        control_number,
-        major,
-        report_title,
-        pdf_route,
-        company_id,
-        semester_id
-    )
-    values (
-        p_student_name,
-        p_control_number,
-        p_major,
-        p_report_title,
-        p_pdf_route,
-        p_company_id,
-        p_semester_id
-    );
+    start transaction;
 
-    select last_insert_id() as id;
+    insert into residencias.reports(student_name, control_number, major, report_title, pdf_route, company_id, semester_id)
+    values (p_student_name, p_control_number, p_major, p_report_title, p_pdf_route, p_company_id, p_semester_id);
+
+    set p_report_id = last_insert_id();
+
+    if p_keywords_json is not null and json_valid(p_keywords_json) and json_length(p_keywords_json) > 0 then
+        set v_json_length = json_length(p_keywords_json);
+        while i < v_json_length do
+            set v_keyword_id = json_unquote(json_extract(p_keywords_json, concat('$[', i, ']')));
+
+            insert into residencias.reports_keywords (report_id, keyword_id)
+            values (p_report_id, v_keyword_id);
+
+            set i = i + 1;
+        end while;
+    end if;
+
+    commit;
+end;
+
+create or replace procedure residencias.get_reports()
+begin
+    select
+        r.id,
+        r.student_name,
+        r.control_number,
+        r.major,
+        r.report_title,
+        r.pdf_route,
+        r.company_id,
+        c.company_name,
+        r.semester_id,
+        s.semester,
+        (select json_arrayagg(k.keyword)
+         from residencias.reports_keywords rk
+         join residencias.keywords k on rk.keyword_id = k.id
+         where rk.report_id = r.id) as keywords
+    from
+        residencias.reports r
+    join
+        residencias.companies c on r.company_id = c.id
+    join
+        residencias.semester s on r.semester_id = s.id;
 end;
 
 create or replace procedure residencias.update_report(
     in p_report_id bigint,
     in p_student_name varchar(100),
-    in p_control_number varchar(15),
-    in p_major varchar(100),
     in p_report_title varchar(255),
-    in p_pdf_route varchar(500),
     in p_company_id bigint,
-    in p_semester_id bigint
+    in p_semester_id bigint,
+    in p_keywords_json json
 )
 begin
-    declare verify_id tinyint unsigned;
+    declare i int default 0;
+    declare v_json_length int;
+    declare v_keyword_id bigint;
 
-    if p_report_id is null then
-        signal sqlstate '45000' set message_text = 'must provide a valid report id';
-    end if;
-
-    select count(*) into verify_id from residencias.reports where id = p_report_id;
-    if verify_id = 0 then
-        signal sqlstate '45000' set message_text = 'report not found';
-    end if;
-
-    if p_student_name is null or trim(p_student_name) = '' then
-        signal sqlstate '45000' set message_text = 'student name cannot be null or empty';
-    end if;
-
-    if p_control_number is null or trim(p_control_number) = '' then
-        signal sqlstate '45000' set message_text = 'control number cannot be null or empty';
-    end if;
-
-    select count(*) into verify_id
-    from residencias.reports
-    where control_number = p_control_number and id <> p_report_id;
-    if verify_id > 0 then
-        signal sqlstate '45000' set message_text = 'control number already exists';
-    end if;
-
-    if p_company_id is null then
-        signal sqlstate '45000' set message_text = 'must provide a valid company id';
-    end if;
-
-    if p_semester_id is null then
-        signal sqlstate '45000' set message_text = 'must provide a valid semester id';
-    end if;
+    start transaction;
 
     update residencias.reports
-    set student_name = p_student_name,
-        control_number = p_control_number,
-        major = p_major,
+    set
+        student_name = p_student_name,
         report_title = p_report_title,
-        pdf_route = p_pdf_route,
         company_id = p_company_id,
         semester_id = p_semester_id
     where id = p_report_id;
 
+    delete from residencias.reports_keywords where report_id = p_report_id;
+
+    if p_keywords_json is not null and json_valid(p_keywords_json) and json_length(p_keywords_json) > 0 then
+        set v_json_length = json_length(p_keywords_json);
+        while i < v_json_length do
+            set v_keyword_id = json_unquote(json_extract(p_keywords_json, concat('$[', i, ']')));
+            insert into residencias.reports_keywords (report_id, keyword_id)
+            values (p_report_id, v_keyword_id);
+            set i = i + 1;
+        end while;
+    end if;
+
+    commit;
     select p_report_id as id;
 end;
 
@@ -953,37 +1045,10 @@ create or replace procedure residencias.delete_report(
     in p_report_id bigint
 )
 begin
-    declare verify_id tinyint unsigned;
-    declare result_message varchar(255);
-
-    if p_report_id is null then
-        signal sqlstate '45000' set message_text = 'must provide a valid report id';
-    end if;
-
-    select count(*) into verify_id from residencias.reports where id = p_report_id;
-    if verify_id = 0 then
-        signal sqlstate '45000' set message_text = 'report not found';
-    else
-        delete from residencias.reports where id = p_report_id;
-        set result_message = 'report deleted successfully';
-    end if;
-
-    select result_message as message;
+    delete from residencias.reports where id = p_report_id;
+    select 'report deleted successfully' as message;
 end;
 
-create or replace procedure residencias.get_reports()
-begin
-    select 
-        id,
-        student_name,
-        control_number,
-        major,
-        report_title,
-        pdf_route,
-        company_id,
-        semester_id
-    from residencias.reports;
-end;
 
 create or replace procedure residencias.get_reports_by_keyword(
     in p_keyword varchar(30)

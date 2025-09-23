@@ -23,6 +23,18 @@ class PermissionsController {
     const result = await PermissionsService.deletePermission({ permission_id });
     reply.sendSuccess({ message: result.message || 'Permission deleted', data: null });
   };
+  
+  assignPermissionsToRole = async (req, reply) => {
+    const { role_id, permissions } = req.body;
+    const result = await PermissionsService.assignPermissionsToRole({ role_id, permissions });
+    reply.sendSuccess({ message: result.message, data: null });
+  };
+
+  getPermissionsForRole = async (req, reply) => {
+    const { role_id } = req.params;
+    const result = await PermissionsService.getPermissionsForRole({ role_id });
+    reply.sendSuccess({ message: 'Permissions for role fetched successfully', data: result });
+  };
 }
 
 export default new PermissionsController();

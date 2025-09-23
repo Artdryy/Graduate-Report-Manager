@@ -108,7 +108,7 @@ PUT http://localhost:3000/api/users/update
 
 ### Delete User
 ```http
-DELETE http://localhost:3000/api/users/:user_id
+DELETE http://localhost:3000/api/users/delete/:user_id
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **URL Parameters**: 

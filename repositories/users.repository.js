@@ -63,7 +63,7 @@ class UsersRepository {
 
   async findUserByName({ user_name }) {
       const result = await sequelize.query(
-        'CALL residencias.sp_find_user_by_name(?);',
+        'CALL residencias.find_user_by_name(?);',
         {
           replacements: [ user_name ],
           type: QueryTypes.SELECT,
@@ -74,14 +74,14 @@ class UsersRepository {
 
   async saveRefreshToken(userId, token, expiresAt) {
     await sequelize.query(
-      'CALL residencias.sp_create_refresh_token(?, ?, ?);',
+      'CALL residencias.create_refresh_token(?, ?, ?);',
       { replacements: [userId, token, expiresAt] }
     );
   }
 
   async findUserByRefreshToken(token) {
     const result = await sequelize.query(
-      'CALL residencias.sp_find_user_by_refresh_token(?);',
+      'CALL residencias.find_user_by_refresh_token(?);',
       {
         replacements: [token],
         type: QueryTypes.SELECT
@@ -92,7 +92,7 @@ class UsersRepository {
 
   async deleteRefreshToken(token) {
     const result = await sequelize.query(
-      'CALL residencias.sp_delete_refresh_token(?);',
+      'CALL residencias.delete_refresh_token(?);',
       {
         replacements: [token],
         type: QueryTypes.SELECT
@@ -103,7 +103,7 @@ class UsersRepository {
 
   async findUserByEmail({ email }) {
       const result = await sequelize.query(
-        'CALL residencias.sp_find_user_by_email(?);',
+        'CALL residencias.find_user_by_email(?);',
         {
           replacements: [ email ],
           type: QueryTypes.SELECT,

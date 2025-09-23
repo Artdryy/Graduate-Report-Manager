@@ -5,8 +5,12 @@ import modulesRoutes from './modules.routes.js';
 import permissionsRoutes from './permissions.routes.js';
 import semesterRoutes from './semester.routes.js';
 import keywordsRoutes from './keywords.routes.js';
+import healthRoutes from './health-check.routes.js';
+import reportsRoutes from './reports.routes.js';
 
 export default async function fastifyRoutes(fastify, options) {
+    // Health Check Route
+    fastify.register(healthRoutes, { prefix: '/health' });
     // Users Routes
     fastify.register(usersRoutes, { prefix: '/users' });
     
@@ -27,4 +31,7 @@ export default async function fastifyRoutes(fastify, options) {
     
     // Keywords Routes
     fastify.register(keywordsRoutes, { prefix: '/keywords' });
+
+    // Reports Routes
+    fastify.register(reportsRoutes, { prefix: '/reports' });
 }

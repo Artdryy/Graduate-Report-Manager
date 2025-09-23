@@ -32,6 +32,26 @@ class PermissionsService {
     if (error) throw error;
     return result;
   }
+
+  async assignPermissionsToRole(data) {
+    const permissionsJson = JSON.stringify(data.permissions);
+    const [result, error] = await catchError(
+      PermissionsRepository.assignPermissionsToRole({
+        role_id: data.role_id,
+        permissionsJson,
+      })
+    );
+    if (error) throw error;
+    return result;
+  }
+
+  async getPermissionsForRole(data) {
+    const [result, error] = await catchError(
+      PermissionsRepository.getPermissionsForRole(data)
+    );
+    if (error) throw error;
+    return result;
+  }
 }
 
 export default new PermissionsService();

@@ -4,7 +4,7 @@
 
 ### Create Semester
 ```http
-POST http://localhost:3000/api/semesters
+POST http://localhost:3000/api/semesters/create
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -16,14 +16,14 @@ POST http://localhost:3000/api/semesters
 
 ### Get All Semesters
 ```http
-GET http://localhost:3000/api/semesters
+GET http://localhost:3000/api/semesters/list
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
 
 ### Update Semester
 ```http
-PUT http://localhost:3000/api/semesters
+PUT http://localhost:3000/api/semesters/update
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **Content-Type**: application/json
@@ -36,7 +36,7 @@ PUT http://localhost:3000/api/semesters
 
 ### Delete Semester
 ```http
-DELETE http://localhost:3000/api/semesters/:semester_id
+DELETE http://localhost:3000/api/semesters/delete/:semester_id
 ```
 - **Auth Required**: Yes (Bearer Token)
 - **URL Parameters**: 

@@ -2,6 +2,7 @@ import { sequelize } from '../config/database.js';
 import { QueryTypes } from 'sequelize';
 
 class PermissionsRepository {
+  // --- CRUD de Permisos Individuales (Ya existente) ---
   async createPermission({ permission }) {
     const result = await sequelize.query(
       'CALL residencias.create_permission(?);',
@@ -43,6 +44,28 @@ class PermissionsRepository {
       }
     );
     return result[0][0];
+  }
+
+  async assignPermissionsToRole({ role_id, permissionsJson }) {
+    const result = await sequelize.query(
+      'CALL residencias.assign_permissions_to_role(?, ?);',
+      {
+        replacements: [role_id, permissionsJson],
+        type: QueryTypes.SELECT,
+      }
+    );
+    return result[0][0];
+  }
+
+  async getPermissionsForRole({ role_id }) {
+    const result = await sequelize.query(
+      'CALL residencias.get_permissions_for_role(?);',
+      {
+        replacements: [role_id],
+        type: QueryTypes.SELECT,
+      }
+    );
+    return result[0];
   }
 }
 

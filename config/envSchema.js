@@ -14,6 +14,8 @@ const envSchema = Joi.object({
     DATABASE_PORT: Joi.number().default(3306),
     API_KEY: Joi.string().optional(),
     JWT_SECRET: Joi.string().required(),
+    ACCESS_TOKEN_EXPIRATION: Joi.string().default('15m'),
+    REFRESH_TOKEN_EXPIRATION_DAYS: Joi.number().default(7),
 }).unknown()
 
 const { error, value: envValues} = envSchema.validate(process.env)
@@ -23,4 +25,4 @@ if (error) {
     process.exit(1)
 }
 
-export {envValues}  
+export {envValues}
