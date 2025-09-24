@@ -3,12 +3,12 @@ import PermissionsMiddleware from '../middlewares/permissions.middleware.js';
 import { checkPermission } from '../middlewares/authorization.middleware.js';
 
 export default async function permissionsRoutes(fastify) {
-  fastify.post('/create', { preHandler: [PermissionsMiddleware.createPermission, checkPermission('Permissions', 'CREATE')] }, PermissionsController.createPermission);
-  fastify.get('/list', { preHandler: [PermissionsMiddleware.getPermissions, checkPermission('Permissions', 'READ')] }, PermissionsController.getPermissions);
-  fastify.put('/update', { preHandler: [PermissionsMiddleware.updatePermission, checkPermission('Permissions', 'UPDATE')] }, PermissionsController.updatePermission);
-  fastify.delete('/delete/:permission_id', { preHandler: [PermissionsMiddleware.deletePermission, checkPermission('Permissions', 'DELETE')] }, PermissionsController.deletePermission);
+  fastify.post('/create', { preHandler: [PermissionsMiddleware.createPermission, checkPermission('Roles', 'CREATE')] }, PermissionsController.createPermission);
+  fastify.get('/list', { preHandler: [PermissionsMiddleware.getPermissions, checkPermission('Roles', 'READ')] }, PermissionsController.getPermissions);
+  fastify.put('/update', { preHandler: [PermissionsMiddleware.updatePermission, checkPermission('Roles', 'UPDATE')] }, PermissionsController.updatePermission);
+  fastify.delete('/delete/:permission_id', { preHandler: [PermissionsMiddleware.deletePermission, checkPermission('Roles', 'DELETE')] }, PermissionsController.deletePermission);
 
-  fastify.get('/role/:role_id', { preHandler: [PermissionsMiddleware.getPermissionsForRole, checkPermission('Permissions', 'READ')] }, PermissionsController.getPermissionsForRole);
+  fastify.get('/role/:role_id', { preHandler: [PermissionsMiddleware.getPermissionsForRole, checkPermission('Roles', 'READ')] }, PermissionsController.getPermissionsForRole);
 
-  fastify.post('/assign-to-role', { preHandler: [PermissionsMiddleware.assignPermissions, checkPermission('Permissions', 'UPDATE')] }, PermissionsController.assignPermissionsToRole);
+  fastify.post('/assign-to-role', { preHandler: [PermissionsMiddleware.assignPermissions, checkPermission('Roles', 'UPDATE')] }, PermissionsController.assignPermissionsToRole);
 }

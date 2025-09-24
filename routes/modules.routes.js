@@ -4,8 +4,8 @@ import { checkPermission } from '../middlewares/authorization.middleware.js';
 
 export default async function modulesRoutes(fastify) {
   // All routes require authentication (private routes)
-  fastify.post('/create', { preHandler: [ModulesMiddleware.createModule, checkPermission('Modules', 'CREATE')] }, ModulesController.createModule);
-  fastify.get('/list', { preHandler: [ModulesMiddleware.getModules, checkPermission('Modules', 'READ')] }, ModulesController.getModules);
-  fastify.put('/update', { preHandler: [ModulesMiddleware.updateModule, checkPermission('Modules', 'UPDATE')] }, ModulesController.updateModule);
-  fastify.delete('/delete/:module_id', { preHandler: [ModulesMiddleware.deleteModule, checkPermission('Modules', 'DELETE')] }, ModulesController.deleteModule);
+  fastify.post('/create', { preHandler: [ModulesMiddleware.createModule, checkPermission('Roles', 'CREATE')] }, ModulesController.createModule);
+  fastify.get('/list', { preHandler: [ModulesMiddleware.getModules, checkPermission('Roles', 'READ')] }, ModulesController.getModules);
+  fastify.put('/update', { preHandler: [ModulesMiddleware.updateModule, checkPermission('Roles', 'UPDATE')] }, ModulesController.updateModule);
+  fastify.delete('/delete/:module_id', { preHandler: [ModulesMiddleware.deleteModule, checkPermission('Roles', 'DELETE')] }, ModulesController.deleteModule);
 }

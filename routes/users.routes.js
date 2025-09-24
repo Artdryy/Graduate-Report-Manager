@@ -19,7 +19,7 @@ export default async function usersRoutes(fastify) {
   // ====================================================================
 
   fastify.post('/create', { preHandler: [UsersMiddleware.createUser, checkPermission('Users', 'CREATE')]}, UsersController.createUser);
-  fastify.get('/list', { preHandler: [UsersMiddleware.getUsers, checkPermission('Users', 'READ') ]}, UsersController.getUsers);
+  fastify.get('/list', { preHandler: [UsersMiddleware.getUsers, checkPermission('Users' || 'Reports', 'READ') ]}, UsersController.getUsers);
   fastify.put('/update', { preHandler: [UsersMiddleware.updateUser, checkPermission('Users', 'UPDATE') ]}, UsersController.updateUser);
   fastify.delete('/delete/:user_id', { preHandler: [UsersMiddleware.deleteUser, checkPermission('Users', 'DELETE') ]}, UsersController.deleteUser);
 } 
